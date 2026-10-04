@@ -37,6 +37,20 @@ throughout the project.
 
 **Project Type:** Individual Capstone Project
 
+## Development Environment
+
+The capstone project is being developed using the following environment:
+
+- **Cloud Platform:** Amazon Web Services (AWS)
+- **AWS Region:** Asia Pacific (Mumbai) - `ap-south-1`
+- **Operating System:** Ubuntu 26.04 LTS
+- **EC2 Instance:** `t3.small`
+- **Access:** PuTTY over SSH
+- **Source Control:** Git and GitHub
+- **Infrastructure as Code:** Terraform
+- **Containerization:** Docker
+- **Container Orchestration Tools:** kubectl and Helm
+- **AWS Authentication:** IAM Role attached to EC2
 ---
 
 > This README will be updated continuously as the project progresses.
