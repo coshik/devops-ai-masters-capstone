@@ -1,3 +1,14 @@
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.*
+
 # Terraform
 .terraform/
 *.tfstate
@@ -6,6 +17,11 @@
 *.tfvars.json
 crash.log
 crash.*.log
+.terraform.lock.hcl
+
+# OS / editor files
+.DS_Store
+Thumbs.db
 
 # Terraform sensitive files
 override.tf
