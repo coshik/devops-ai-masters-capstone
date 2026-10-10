@@ -26,6 +26,24 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Inspect non-secret OIDC claims
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const token = await core.getIDToken("sts.amazonaws.com");
+            const payload = token.split(".")[1];
+            const claims = JSON.parse(
+              Buffer.from(payload, "base64url").toString("utf8")
+            );
+            console.log(JSON.stringify({
+              iss: claims.iss,
+              aud: claims.aud,
+              sub: claims.sub,
+              repository: claims.repository,
+              ref: claims.ref,
+              event_name: claims.event_name
+            }, null, 2));
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
