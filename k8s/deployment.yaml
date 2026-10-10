@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-ai-capstone
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-ai-capstone
+  template:
+    metadata:
+      labels:
+        app: devops-ai-capstone
+    spec:
+      containers:
+        - name: devops-ai-capstone
+          image: 288761772142.dkr.ecr.ap-south-1.amazonaws.com/devops-ai-masters-capstone:latest
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
