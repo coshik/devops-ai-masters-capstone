@@ -1,0 +1,4 @@
+aws_region       = "ap-south-1"
+cluster_name     = "devops-ai-capstone"
+nodegroup_name   = "capstone-ng"
+controller_role_name = "devops-capstone-controller-role"
