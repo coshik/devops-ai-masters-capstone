@@ -12,11 +12,17 @@ spec:
       labels:
         app: devops-ai-capstone
     spec:
+      serviceAccountName: devops-ai-capstone
       containers:
         - name: devops-ai-capstone
           image: 288761772142.dkr.ecr.ap-south-1.amazonaws.com/devops-ai-masters-capstone:latest
           ports:
             - containerPort: 3000
+          env:
+            - name: AWS_REGION
+              value: ap-south-1
+            - name: SECRET_ARN
+              value: arn:aws:secretsmanager:ap-south-1:288761772142:secret:devops-ai-capstone/app-config-9axWTJ
           readinessProbe:
             httpGet:
               path: /health
