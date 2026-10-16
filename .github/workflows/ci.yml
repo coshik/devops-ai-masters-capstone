@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Scan dependencies for critical vulnerabilities
+        run: npm audit --audit-level=critical
+
       - name: Run unit tests
         run: npm test
 
