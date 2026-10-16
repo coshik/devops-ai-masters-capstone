@@ -30,15 +30,25 @@ jobs:
         run: npm ci
 
       - name: Generate dependency vulnerability report
-        run: npm audit --json > npm-audit-report.json
-        continue-on-error: true
+        run: |
+          npm audit --json > npm-audit-report.json || audit_exit=$?
+          if [ ! -s npm-audit-report.json ]; then
+            echo "npm audit did not produce a report (exit code: ${audit_exit:-0})."
+            exit 1
+          fi
 
       - name: Fail if critical vulnerabilities are found
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const report = JSON.parse(fs.readFileSync('npm-audit-report.json', 'utf8'));
-          const critical = report.metadata?.vulnerabilities?.critical ?? 0;
+          const counts = report.metadata?.vulnerabilities;
+          if (!counts) {
+            console.error('Audit report is missing vulnerability counts.');
+            process.exit(1);
+          }
+          const critical = counts.critical ?? 0;
+          console.log('Dependency vulnerabilities:', counts);
           console.log(`Critical vulnerabilities found: ${critical}`);
           if (critical > 0) process.exit(1);
           NODE
