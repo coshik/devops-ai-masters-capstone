@@ -37,6 +37,19 @@ jobs:
             exit 1
           fi
 
+      - name: TEST ONLY - Simulate a critical vulnerability
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'npm-audit-report.json';
+          const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+          report.metadata = report.metadata || {};
+          report.metadata.vulnerabilities = report.metadata.vulnerabilities || {};
+          report.metadata.vulnerabilities.critical = 1;
+          fs.writeFileSync(path, JSON.stringify(report, null, 2) + '\n');
+          console.log('Test-only synthetic critical finding added to the report.');
+          NODE
+
       - name: Fail if critical vulnerabilities are found
         run: |
           node <<'NODE'
@@ -57,7 +70,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: npm-audit-report
+          name: npm-audit-report-critical-gate-test
           path: npm-audit-report.json
           if-no-files-found: warn
 
