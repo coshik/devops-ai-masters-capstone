@@ -71,4 +71,4 @@ jobs:
         run: npm run build
 
       - name: Verify build artifact
-        run: ls -la dist-debug/
+        run: ls -la dist/
