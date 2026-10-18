@@ -9,7 +9,7 @@ Demonstrate a controlled GitHub Actions pipeline failure, identify its root caus
 - **Workflow:** CI
 - **Job:** Test, Lint and Build
 - **Failed step:** Verify build artifact
-- **GitHub Actions run:** https://github.com/coshik/devops-ai-masters-capstone/actions/runs/39109419311
+- **Failed GitHub Actions run:** https://github.com/coshik/devops-ai-masters-capstone/actions/runs/39109419311
 - **Failing command:** `ls -la dist-debug/`
 - **Observed error:** `ls: cannot access 'dist-debug/': No such file or directory`
 - **Exit code:** 2
@@ -22,13 +22,17 @@ The expected build artifact directory was not found at the configured path. The 
 
 ## 4. Resolution
 
-Restore the verification command to `ls -la dist/`, commit the correction on the `feature/pipeline-debugging` branch, and verify that the GitHub Actions workflow passes.
+Restored the verification command to ls -la dist/ on the feature/pipeline-debugging branch, committed the correction, and verified that the GitHub Actions workflow passed.
 
 ## 5. Validation
 
-- **Before correction:** Pipeline failed at Verify build artifact.
-- **After correction:** Record the actual GitHub Actions result and run URL here.
+- **Before correction:** Pipeline failed at `Verify build artifact` because `dist-debug/` did not exist.
+- **After correction:** Pipeline passed after restoring the command to `ls -la dist/`.
+- **Successful GitHub Actions run:** https://github.com/coshik/devops-ai-masters-capstone/actions/runs/39129912018
+- **Result:** The pipeline failure was reproduced, diagnosed, corrected, and validated.
 
 ## 6. Evidence
 
-Attach or reference the failure log and screenshot from the failed GitHub Actions run.
+- Screenshot of the failed GitHub Actions run.
+- Downloaded failure logs showing the missing `dist-debug/` directory and exit code 2.
+- Successful GitHub Actions run showing the green check.
