@@ -1,202 +1,180 @@
-# DevOps with AI Masters Program - Capstone Project
+# AWS Enterprise DevOps Capstone Project
 
-## Project Status
+**Name:** Kaushik Shettigar
+**Program:** DevOps with AI Masters Program
+**Assignment:** AWS Enterprise DevOps Capstone Project (individual)
+**Repository:** https://github.com/coshik/devops-ai-masters-capstone
 
-🚧 **Project in progress**
+## 1. Problem statement
 
-Tasks 1–8 have implementation and verification work documented below. The remaining work includes the DevSecOps, Observability, Troubleshooting, and Cost Optimization phases; the capstone is not yet complete.
+Build an end-to-end, enterprise-style DevOps platform on AWS that demonstrates the day-to-day responsibilities of a DevOps engineer: source control and collaboration, CI/CD, infrastructure as code, containerization and Kubernetes operations, observability, DevSecOps, troubleshooting and cost optimization. The assignment has 16 tasks across 8 phases, and each task requires verifiable evidence (files, logs, screenshots, reports).
 
-## About
+## 2. Solution approach
 
-This repository contains my individual capstone project for the DevOps with AI Masters Program.
+A Node.js (Express) application is built, tested and scanned by GitHub Actions, packaged as a Docker image in Amazon ECR, and deployed to Amazon EKS through a multi-stage pipeline with a manual approval gate before production.
 
-The project covers:
-
-1. Source Control & Collaboration
-2. CI/CD Pipelines
-3. Infrastructure as Code (Terraform)
-4. Containerization & Kubernetes
-5. DevSecOps
-6. Observability
-7. Troubleshooting
-8. Cost Optimization
-
-## Project Approach
-
-The project is implemented individually using AWS cloud infrastructure and DevOps tools. Changes are developed on feature branches, validated with GitHub Actions, and merged through pull requests. The README records implementation choices, validation commands, and known scope limitations.
-
-## Implemented Work
-
-### Task 1 — Source Control & Collaboration
-
-- Established a branching strategy: `main` for production, `develop` for integration, and `feature/*` branches for individual changes.
-- Configured GitHub rulesets for `main` and `develop` to require pull requests and block force pushes.
-- Used feature-to-develop and develop-to-main pull requests to promote validated changes.
-
-### Task 2 — CI Pipeline
-
-- Added the Node.js application and automated tests for the root route and `/health` endpoint.
-- Added the GitHub Actions workflow at `.github/workflows/ci.yml`.
-- The workflow uses Node.js 22 and runs dependency installation, tests, lint checks, build verification, and build-output checks on relevant pushes and pull requests.
-- CI was verified successfully for the implementation pull request.
-
-### Task 3 — Continuous Deployment to AWS
-
-- Containerized the Node.js application and deployed it to Amazon Elastic Kubernetes Service (EKS).
-- Created the ECR repository `devops-ai-masters-capstone` in `ap-south-1`.
-- Configured GitHub Actions to authenticate to AWS using OpenID Connect (OIDC) and an IAM role rather than long-lived AWS access keys.
-- Deployed Kubernetes manifests and verified the application through its LoadBalancer service and `/health` endpoint.
-
-### Task 4 — Multi-Stage CI/CD Pipeline
-
-- Implemented the workflow at `.github/workflows/cd.yml` with Dev, Test, and Prod stages.
-- The pipeline builds and validates the application image, pushes commit-specific and `latest` tags to ECR, and deploys the selected image to EKS.
-- Configured a production environment approval gate before the production deployment.
-- Verified the workflow and approved the production deployment during implementation.
-
-### Task 5 — Infrastructure as Code (Terraform)
-
-- Added Terraform configuration and usage notes under `terraform/`.
-- Used Terraform data sources to discover existing infrastructure, including the EKS cluster `devops-ai-capstone`, managed node group `capstone-ng`, VPC/subnets, and relevant IAM roles.
-- Added CloudWatch logging configuration for the EKS control-plane log group `/aws/eks/devops-ai-capstone/cluster` with seven-day retention.
-- Enabled EKS control-plane logging for API, audit, authenticator, controller manager, and scheduler events during implementation.
-- Ran Terraform formatting/validation and reviewed the plan before applying the intended CloudWatch log group change.
-
-**Scope note:** the VPC, EKS cluster, node group, and IAM roles already existed and are referenced by data sources; this configuration does not create or fully manage those existing resources. Review Terraform plans carefully before applying changes.
-
-### Task 6 — AWS Secrets Manager and IRSA
-
-- Integrated the AWS Secrets Manager SDK into the Node.js application.
-- Configured IAM Roles for Service Accounts (IRSA) so the Kubernetes service account `devops-ai-capstone` can retrieve only the designated application secret.
-- Restricted the IAM policy to the specific Secrets Manager secret ARN rather than granting broad secret access.
-- Added `/secret-status`, which reports whether configuration is available without returning the secret value.
-- Added automated tests covering the normal routes and secret-status success/failure behavior.
-- Verified `npm test`, `npm run lint`, and `npm run build`, then verified the CD workflow and the live `/secret-status` response.
-
-**Security note:** secret values, AWS credentials, tokens, and other sensitive values must never be committed to this repository or included in screenshots.
-
-### Task 7 — Dockerization and Amazon ECR
-
-- Hardened the production `Dockerfile` using Node.js 22 Alpine, production-only dependency installation, `NODE_ENV=production`, and the non-root `node` user.
-- Added `.dockerignore` to exclude Git metadata, local dependencies, test output, Terraform and Kubernetes files, screenshots, and other non-image files from the Docker build context.
-- Built the application image and pushed it to Amazon Elastic Container Registry (ECR).
-
-**ECR repository:** `288761772142.dkr.ecr.ap-south-1.amazonaws.com/devops-ai-masters-capstone`
-
-**AWS Region:** `ap-south-1`
-
-The manually verified `latest` image push on 2026-10-15 returned this digest:
-
-`sha256:aa161a0d7939046663ed8ac3e19cab9c779b86b5aaae85195267d0d05d658696`
-
-The running EKS Deployment was observed using a commit-specific image tag. Pushing `latest` does not by itself mean that this manually pushed image is running in the cluster.
-
-Build and push commands:
-
-```bash
-docker build -t devops-ai-masters-capstone:latest .
-ECR=288761772142.dkr.ecr.ap-south-1.amazonaws.com/devops-ai-masters-capstone
-aws ecr get-login-password --region ap-south-1 | \
-  docker login --username AWS --password-stdin \
-  288761772142.dkr.ecr.ap-south-1.amazonaws.com
-docker tag devops-ai-masters-capstone:latest "$ECR:latest"
-docker push "$ECR:latest"
+```
+Developer ─▶ feature/* ─PR─▶ develop ─PR─▶ main
+                               │              │
+                          CI: install, test, lint, build,
+                          dependency audit (fails on critical)
+                                              │
+                      CD (push to main): Dev ─▶ Test ─▶ Prod (manual approval)
+                                              │
+                      OIDC role ─▶ build image ─▶ Amazon ECR ─▶ Amazon EKS
+                                              │
+        Secrets Manager (via IRSA) · CloudWatch metrics, alarms, logs · Helm chart
 ```
 
-Verify the published image tag and digest:
+Key design choices:
 
-```bash
-aws ecr describe-images \
-  --repository-name devops-ai-masters-capstone \
-  --region ap-south-1 \
-  --image-ids imageTag=latest \
-  --query 'imageDetails[0].[imageTags,imageDigest,imagePushedAt]' \
-  --output json
+- **No long-lived AWS keys.** GitHub Actions authenticates to AWS with OpenID Connect and an IAM role.
+- **Least-privilege secrets.** The pods read one Secrets Manager secret through IAM Roles for Service Accounts (IRSA). The `/secret-status` endpoint reports whether the secret is available and never returns its value.
+- **Security gates.** `npm audit` fails the pipeline on critical vulnerabilities, and the container image is scanned in ECR.
+- **Honest evidence.** Failures in Tasks 14 and 15 were introduced deliberately and are documented as such.
+
+**Scope note.** The VPC, EKS cluster (`devops-ai-capstone`), node group and IAM roles were created with eksctl. The Terraform configuration references them with data sources and manages the CloudWatch logging configuration. It does not manage the whole cluster.
+
+## 3. Tasks and documentation
+
+| Phase | Task | Summary | Documentation |
+|---|---|---|---|
+| 1 Source control | 1 | Branching (`main`, `develop`, `feature/*`), rulesets, pull requests | [branching-strategy.md](branching-strategy.md) |
+| 2 CI/CD | 2 | CI on pushes and PRs: install, test, lint, build | `.github/workflows/ci.yml` |
+| | 3 | Continuous delivery to EKS with production approval | `.github/workflows/cd.yml` |
+| | 4 | Multi-stage Dev / Test / Prod pipeline | `.github/workflows/cd.yml` |
+| 3 IaC | 5 | Terraform for CloudWatch logging, referencing the existing cluster | [docs/task5-terraform-infrastructure.md](docs/task5-terraform-infrastructure.md), [terraform/](terraform/) |
+| | 6 | Secrets Manager with IRSA | `app/server.js`, `k8s/` |
+| 4 Containers | 7 | Hardened Dockerfile and ECR push | `Dockerfile`, `.dockerignore` |
+| | 8 | Kubernetes Deployment, Service and probes | [k8s/](k8s/) |
+| | 9 | Helm chart with parameterized values | [docs/helm.md](docs/helm.md), [helm/](helm/devops-ai-capstone/) |
+| 5 Observability | 10 | Container Insights metrics and CloudWatch alarms with email alerts | [docs/monitoring.md](docs/monitoring.md) |
+| | 11 | Centralized logging and Logs Insights queries | [docs/logging.md](docs/logging.md) |
+| 6 DevSecOps | 12 | Dependency scanning with a critical-vulnerability gate | [docs/security/dependency-scanning.md](docs/security/dependency-scanning.md) |
+| | 13 | ECR image scanning and remediation | [docs/security/container-image-scan.md](docs/security/container-image-scan.md) |
+| 7 Troubleshooting | 14 | Pipeline failure, root cause analysis and fix | [docs/troubleshooting/task-14-pipeline-debugging.md](docs/troubleshooting/task-14-pipeline-debugging.md) |
+| | 15 | Pod networking failure (DNS), diagnosis and fix | [docs/troubleshooting/task-15-kubernetes-networking.md](docs/troubleshooting/task-15-kubernetes-networking.md) |
+| 8 Cost | 16 | Cost review, idle NAT gateway removed, ECR lifecycle policy | [docs/cost-optimization.md](docs/cost-optimization.md), [ecr/](ecr/lifecycle-policy.json) |
+
+Troubleshooting index: [docs/troubleshooting.md](docs/troubleshooting.md).
+
+Architecture: [docs/architecture.md](docs/architecture.md). Security overview: [docs/security.md](docs/security.md).
+
+**Evidence.** Screenshots are in [docs/evidence/](docs/evidence/), named `taskNN-X-description.png`. Each document lists its own evidence files.
+
+## 4. Repository structure
+
+```
+.github/workflows/   ci.yml, cd.yml, oidc-diagnostic.yml
+app/                 Node.js application (server.js)
+tests/               Jest tests
+k8s/                 Deployment and Service manifests
+helm/                Helm chart (devops-ai-capstone)
+terraform/           Terraform configuration
+ecr/                 ECR lifecycle policy
+docs/                Documentation and evidence
+Dockerfile           Production image
 ```
 
-### Task 8 — Kubernetes Deployment, Service, and Probes
+## 5. Prerequisites and setup
 
-Kubernetes manifests are maintained in `k8s/`:
+| Tool | Purpose |
+|---|---|
+| Git, GitHub account | Source control and Actions |
+| Node.js 22 and npm | Run and test the app |
+| Docker | Build the image |
+| AWS CLI with permissions for ECR, EKS, IAM, CloudWatch, Secrets Manager | AWS operations |
+| `kubectl` | Kubernetes access to the cluster |
+| Helm 3 or later | Helm chart (tested with v4.3.0) |
+| Terraform | Infrastructure configuration |
 
-- `k8s/deployment.yaml`: Deployment with two replicas and HTTP readiness/liveness probes against `/health` on port `3000`.
-- `k8s/service.yaml`: LoadBalancer Service exposing port `80` and forwarding to container port `3000`.
-- The Deployment uses the IRSA-backed service account and sets the AWS region and secret ARN as environment variables.
+AWS resources the pipeline expects (region `ap-south-1`):
 
-Verification commands:
+- An EKS cluster named `devops-ai-capstone` with a managed node group
+- An ECR repository named `devops-ai-masters-capstone`
+- A Secrets Manager secret for the app configuration and an IRSA-backed service account named `devops-ai-capstone`
+- An IAM role trusted by GitHub OIDC for the workflows, and a GitHub `production` environment with required reviewers
 
-```bash
-kubectl rollout status deployment/devops-ai-capstone
-kubectl get pods -o wide
-kubectl get deployment devops-ai-capstone
-kubectl get service devops-ai-capstone
-kubectl describe deployment devops-ai-capstone
-curl -i http://<load-balancer-dns>/health
-curl -i http://<load-balancer-dns>/secret-status
-```
+No credentials are stored in this repository. Replace `<account-id>` below with your AWS account ID.
 
-**Observed verification:** the rollout succeeded; both pods were `1/1 Running` with zero restarts; the Deployment reported `2/2` available; the Service had an external LoadBalancer DNS name; and readiness/liveness probes were present. The `/health` and `/secret-status` endpoints were checked successfully during the session.
+## 6. Execution steps
 
-## Evidence & Screenshots
-
-Screenshots are maintained locally in the phase-based folder structure and are not assumed to be committed to this repository.
-
-- **Task 1:** Git branching strategy and repository rules / pull-request evidence.
-- **Task 2:** CI workflow and successful test, lint, and build checks.
-- **Task 3:** ECR/EKS deployment and application health verification.
-- **Task 4:** Dev/Test/Prod workflow and production approval/deployment.
-- **Task 5:** Terraform plan/apply, CloudWatch log group, and EKS control-plane logging.
-- **Task 6:** CI validation and the `/secret-status` response (without exposing secret contents).
-- **Task 7:** T7-1 to T7-5 — Docker build, image push, ECR listing, and digest verification. T7-6 — CI checks/PR evidence; confirm that this screenshot has been saved.
-- **Task 8:** T8-1 — pod/Deployment status; T8-2 — Service and probes; T8-3 — `/health` response; T8-4 — `/secret-status` response.
-
-Keep screenshots free of credentials, access keys, tokens, and secret values.
-
-## Dependencies and Tools
-
-- Git and GitHub
-- Node.js 22 and npm
-- Docker
-- AWS CLI and AWS permissions for the required resources
-- Amazon ECR and Amazon EKS
-- `kubectl`
-- Terraform
-- GitHub Actions with OIDC-based AWS authentication
-
-## Basic Application Validation
-
-Run these commands from the repository root:
+**1. Run and test the application locally**
 
 ```bash
 npm ci
 npm test
 npm run lint
 npm run build
+node app/server.js          # serves on port 3000
+curl http://localhost:3000/health
+```
+
+**2. Build the image**
+
+```bash
 docker build -t devops-ai-masters-capstone:latest .
 ```
 
-For AWS and Kubernetes operations, ensure the appropriate AWS identity and EKS context are selected before running commands. Do not run deployment or infrastructure changes against an unintended environment.
+**3. Push to ECR**
 
-## Author
+```bash
+ECR=<account-id>.dkr.ecr.ap-south-1.amazonaws.com/devops-ai-masters-capstone
+aws ecr get-login-password --region ap-south-1 | \
+  docker login --username AWS --password-stdin <account-id>.dkr.ecr.ap-south-1.amazonaws.com
+docker tag devops-ai-masters-capstone:latest "$ECR:latest"
+docker push "$ECR:latest"
+```
 
-**Name:** Kaushik Shettigar
+**4. Deploy through the pipeline (normal path)**
 
-**Program:** DevOps with AI Masters Program
+1. Create a `feature/*` branch and open a PR into `develop`. CI runs tests, lint, build and the dependency audit.
+2. Promote with a PR from `develop` into `main`.
+3. The push to `main` starts the CD workflow: Dev, Test, then Prod, which waits for manual approval.
 
-**Project Type:** Individual Capstone Project
+**5. Deploy manually with kubectl**
 
-## Development Environment
+```bash
+aws eks update-kubeconfig --name devops-ai-capstone --region ap-south-1
+kubectl apply -f k8s/
+kubectl rollout status deployment/devops-ai-capstone
+kubectl get pods,svc
+```
 
-- **Cloud Platform:** Amazon Web Services (AWS)
-- **AWS Region:** Asia Pacific (Mumbai) — `ap-south-1`
-- **Operating System:** Ubuntu 26.04 LTS on the EC2 controller
-- **EC2 Instance:** `t3.small`
-- **Access:** PuTTY over SSH
-- **Source Control:** Git and GitHub
-- **Infrastructure as Code:** Terraform
-- **Containerization:** Docker
-- **Container Orchestration:** Amazon EKS and `kubectl`
-- **AWS Authentication:** IAM role attached to EC2; GitHub Actions uses OIDC for AWS access
+**6. Deploy with Helm**
 
----
+```bash
+helm lint helm/devops-ai-capstone
+helm install capstone-helm helm/devops-ai-capstone
+helm upgrade capstone-helm helm/devops-ai-capstone \
+  --set replicaCount=3 --set image.tag=<tag> --set resources.limits.memory=512Mi
+helm history capstone-helm
+```
 
-This README will be updated as the project progresses.
+**7. Terraform**
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars   # then edit values
+terraform init
+terraform plan
+terraform apply
+```
+
+Review the plan before applying. Details are in [terraform/README.md](terraform/README.md).
+
+**8. Verify**
+
+```bash
+curl http://<load-balancer-dns>/health          # {"status":"healthy"}
+curl http://<load-balancer-dns>/secret-status   # {"configured":true}
+```
+
+Monitoring, logging and troubleshooting commands are in the documents linked in section 3.
+
+## 7. Notes and limitations
+
+- To limit cost, worker nodes are scaled to zero and the controller instance is stopped when idle. Scale the node group back up before running any `kubectl` or Helm commands.
+- The Helm release `capstone-helm` was a separate demonstration release and was uninstalled after the evidence was captured. The CD pipeline deploys with `kubectl apply`.
+- The idle NAT gateway was removed (Task 16). Private nodes added later would need a NAT gateway or VPC endpoints.
+- Do not commit secrets, credentials or tokens, and keep them out of screenshots.
