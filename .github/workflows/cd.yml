@@ -107,7 +107,15 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::288761772142:role/github-actions-devops-capstone-role
           aws-region: ${{ env.AWS_REGION }}
-
+          
+      - name: Retrieve application secret from Secrets Manager
+        run: |
+          SECRET=$(aws secretsmanager get-secret-value \
+            --secret-id devops-ai-capstone/app-config \
+            --region "$AWS_REGION" --query SecretString --output text)
+          echo "::add-mask::$SECRET"
+          echo "Secret retrieved successfully (${#SECRET} characters)"
+          
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
