@@ -1,0 +1,43 @@
+# Number of pod replicas
+replicaCount: 2
+
+image:
+  repository: 288761772142.dkr.ecr.ap-south-1.amazonaws.com/devops-ai-masters-capstone
+  # Override with a commit-specific tag for reproducible deployments
+  tag: latest
+  pullPolicy: Always
+
+# Re-use the existing IRSA-backed service account (created outside this chart)
+serviceAccount:
+  name: devops-ai-capstone
+
+containerPort: 3000
+
+aws:
+  region: ap-south-1
+  secretArn: arn:aws:secretsmanager:ap-south-1:288761772142:secret:devops-ai-capstone/app-config-9axWTJ
+
+service:
+  # ClusterIP avoids creating a second load balancer; use LoadBalancer for external access
+  type: ClusterIP
+  port: 80
+
+probes:
+  path: /health
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 20
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+nameOverride: ""
+fullnameOverride: ""
