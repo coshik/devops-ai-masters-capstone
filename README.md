@@ -40,11 +40,11 @@ Key design choices:
 | Phase | Task | Summary | Documentation |
 |---|---|---|---|
 | 1 Source control | 1 | Branching (`main`, `develop`, `feature/*`), rulesets, pull requests | [branching-strategy.md](branching-strategy.md) |
-| 2 CI/CD | 2 | CI on pushes and PRs: install, test, lint, build | `.github/workflows/ci.yml` |
-| | 3 | Continuous delivery to EKS with production approval | `.github/workflows/cd.yml` |
-| | 4 | Multi-stage Dev / Test / Prod pipeline | `.github/workflows/cd.yml` |
+| 2 CI/CD | 2 | CI on pushes and PRs: install, test, lint, build | [docs/cicd-pipeline.md](docs/cicd-pipeline.md), `.github/workflows/ci.yml` |
+| | 3 | Continuous delivery to EKS with production approval | [docs/cicd-pipeline.md](docs/cicd-pipeline.md), `.github/workflows/cd.yml` |
+| | 4 | Multi-stage Dev / Test / Prod pipeline with environment variables | [docs/cicd-pipeline.md](docs/cicd-pipeline.md), `.github/workflows/cd.yml` |
 | 3 IaC | 5 | Terraform for CloudWatch logging, referencing the existing cluster | [docs/task5-terraform-infrastructure.md](docs/task5-terraform-infrastructure.md), [terraform/](terraform/) |
-| | 6 | Secrets Manager with IRSA | `app/server.js`, `k8s/` |
+| | 6 | Secrets Manager with IRSA (pods) and an OIDC role (pipeline) | [docs/secrets-management.md](docs/secrets-management.md) |
 | 4 Containers | 7 | Hardened Dockerfile and ECR push | `Dockerfile`, `.dockerignore` |
 | | 8 | Kubernetes Deployment, Service and probes | [k8s/](k8s/) |
 | | 9 | Helm chart with parameterized values | [docs/helm.md](docs/helm.md), [helm/](helm/devops-ai-capstone/) |
