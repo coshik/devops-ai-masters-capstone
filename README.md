@@ -33,7 +33,7 @@ Key design choices:
 - **Security gates.** `npm audit` fails the pipeline on critical vulnerabilities, and the container image is scanned in ECR.
 - **Honest evidence.** Failures in Tasks 14 and 15 were introduced deliberately and are documented as such.
 
-**Scope note.** The VPC, EKS cluster (`devops-ai-capstone`), node group and IAM roles were created with eksctl. The Terraform configuration references them with data sources and manages the CloudWatch logging configuration. It does not manage the whole cluster.
+**Scope note.** The VPC, EKS cluster (`devops-ai-capstone`), node group and IAM roles were created with eksctl for the deployment tasks, before the Terraform task. The Terraform configuration references them with data sources and manages the CloudWatch log group for the EKS control plane. This differs from the brief, which asks Terraform to provision the VPC, cluster and node group. See docs/task5-terraform-infrastructure.md. The infrastructure was torn down after submission, so the configuration needs the cluster recreated before it can plan or apply.
 
 ## 3. Tasks and documentation
 
